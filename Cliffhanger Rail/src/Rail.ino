@@ -324,7 +324,7 @@ void init_rail_outputs() {
 
 void handle_messages() {
   static message_status_t messageStatus = NACK;
-  master_message_t messageIn = {0, 0, 0};
+  master_message_t messageIn = {0, NONE, 0};
   response_message_t response = {startByte, warningState, endState, ACK, endByte};
   switch (messageSendState) {
     case RECEIVE:
@@ -338,7 +338,7 @@ void handle_messages() {
         //transmit message
       } else {
 
-        if (Serial1.available() >= sizeof(master_message_t)) {
+        if ((unsigned)Serial1.available() >= sizeof(master_message_t)) {
           //Serial.print("message receieved -> current position: ");
           //Serial.println(currentPosition);
           messageSendState = TRANSMIT;
