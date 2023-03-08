@@ -80,6 +80,7 @@ typedef struct response_message_t {
   uint8_t startByte;
   uint8_t warningState;
   uint8_t endState;
+  uint8_t travelState;
   message_status_t messageStatus;
   uint8_t endByte;
 } response_message_t;
@@ -106,6 +107,7 @@ bool atStart = false;
 bool moveToStart = false;
 bool moveDistance = false;
 bool jogForward = true;
+bool isTravelling = false;
 
 int distance = 0;
 uint32_t currentPosition = 0;
@@ -282,6 +284,7 @@ void display_error() {
 
 
 void takeStep(stepper_direction_t direction, uint16_t stepDelay) {
+  isTravelling = true;
   switch(direction) {
     case FORWARD:
       digitalWrite(dirPin,HIGH); // Enables the belt to move forward
@@ -325,7 +328,7 @@ void init_rail_outputs() {
 void handle_messages() {
   static message_status_t messageStatus = NACK;
   master_message_t messageIn = {0, NONE, 0};
-  response_message_t response = {startByte, warningState, endState, ACK, endByte};
+  response_message_t response = {startByte, warningState, endState, isTravelling, ACK, endByte};
   switch (messageSendState) {
     case RECEIVE:
       if (messageReceiveTimer.timeUp()) {
@@ -370,10 +373,10 @@ void handle_messages() {
       
       digitalWrite(max845_enable, HIGH);
       Serial1.write((byte *)&response, sizeof(response_message_t));
-      delayMicroseconds(500);
+      delayMicroseconds(600);
       digitalWrite(max845_enable, LOW);
       //Serial.println("response sent");
-      
+      isTravelling = false;
       messageReceiveTimer.reset();
       messageSendState = RECEIVE;
       break;
