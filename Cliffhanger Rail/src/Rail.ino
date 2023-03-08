@@ -33,6 +33,8 @@ T08.ogg                                 Reset Game Music
 /*Serial1 pins 19(RX), 18(TX)*/
 
 const int stepperDelay = 1000;
+const int resetStepperDelay = 400;
+const int resetTimeout = 10000;
 const uint32_t stepsPerInterval = 197;  //7100/36
 //const uint32_t stepsPerInterval = 254; //6100/24
 //********************************SENSORS AND MOTOR CONTROL***********************************
@@ -43,8 +45,6 @@ const int stepPin = 22;                      //Stepper Motor Control
 const int dirPin  = 23;
 
 const int max845_enable = 2;
-
-#define RESET_TIMEOUT 5000
 
 typedef enum stepper_direction_t {
   FORWARD = 1,
@@ -154,13 +154,13 @@ uint32_t getNewPosition(uint32_t start, uint32_t distance) {
 }
 
 void move_stepper() {
-  static MillisTimer resetTimer = {RESET_TIMEOUT};
+  static MillisTimer resetTimer = {resetTimeout};
   if(jogForward) {
-    takeStep(FORWARD);
+    takeStep(FORWARD, stepperDelay);
     currentPosition++;
   } else if (moveDistance) {
     if(currentPosition < newPosition) {
-      takeStep(FORWARD);
+      takeStep(FORWARD, stepperDelay);
       currentPosition++;
     } else {
       moveDistance = false;
@@ -173,7 +173,7 @@ void move_stepper() {
     Serial.print("resetting from position: ");
     Serial.println(currentPosition);
     while(!atStart && !resetTimer.timeUp()) {
-      takeStep(REVERSE);
+      takeStep(REVERSE, stepperDelay);
       currentPosition++;
     }
     currentPosition = 0;
@@ -281,25 +281,25 @@ void display_error() {
 }
 
 
-void takeStep(stepper_direction_t direction) {
+void takeStep(stepper_direction_t direction, uint16_t stepDelay) {
   switch(direction) {
     case FORWARD:
       digitalWrite(dirPin,HIGH); // Enables the belt to move forward
       digitalWrite(stepPin,HIGH);  
-      delayMicroseconds(stepperDelay);
+      delayMicroseconds(stepDelay);
 
       digitalWrite(stepPin,LOW);
-      delayMicroseconds(stepperDelay);
+      delayMicroseconds(stepDelay);
       Serial.print(". ");
       break;
     case REVERSE:
       digitalWrite(dirPin,LOW); // Enables the belt to move forward
       digitalWrite(stepPin,HIGH);
 
-      delayMicroseconds(stepperDelay); 
+      delayMicroseconds(stepDelay); 
       digitalWrite(stepPin,LOW); 
 
-      delayMicroseconds(stepperDelay);
+      delayMicroseconds(stepDelay);
       break;
     default:
       Serial.println("invalid direction");
