@@ -254,12 +254,15 @@ void handle_states() {
 void read_inputs() {
   if(digitalRead(dangerLocationPin) == LOW) {
     warningState = 1;
+    Serial.println("danger location triggered");
   }
   if(digitalRead(fallPin) == LOW) {
     endState = 1;
+    Serial.println("fall triggered");
   }
   if(digitalRead(resetPin) == LOW) {
     atStart = true;
+    Serial.println("at start");
   } else {
     atStart = false;
   }
