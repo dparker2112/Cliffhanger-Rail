@@ -106,7 +106,7 @@ bool messageAck = false;
 bool atStart = false;
 bool moveToStart = false;
 bool moveDistance = false;
-bool jogForward = true;
+bool jogForward = false;
 bool isTravelling = false;
 
 int distance = 0;
@@ -355,11 +355,15 @@ void handle_messages() {
             newState = messageIn.currentState;
             errorFlag = false;
           } else {
-            Serial.print("NACK ");
+            Serial.print("NACK: ");
+            Serial.print(messageIn.startByte);
+            Serial.print(" ");
+            Serial.print(messageIn.endByte);
             while(Serial1.available()) {
-              Serial1.read();
-              //Serial.print(".");
+              Serial.print(" ");
+              Serial.print(Serial1.read(),DEC);
             }
+            Serial.println();
             messageStatus= NACK;
           }
           //give time for lectern to switch to receive mode
