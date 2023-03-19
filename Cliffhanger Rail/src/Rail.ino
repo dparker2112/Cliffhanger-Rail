@@ -67,7 +67,8 @@ typedef enum lectern_state_t {
   RANDOM_MOVE = 1,
   SPACE24 = 2,
   MANUAL = 3,
-  NONE = 4
+  NONE = 4,
+  NO_MESSAGE = 5
 } lectern_state_t;
 
 typedef struct master_message_t {
@@ -110,7 +111,7 @@ bool jogForward = false;
 bool isTravelling = false;
 
 bool stepperEnabled = false;
-
+bool resetEnabled = true;
 int distance = 0;
 uint32_t currentPosition = 0;
 uint32_t newPosition = 0;
@@ -159,6 +160,8 @@ uint32_t getNewPosition(uint32_t start, uint32_t distance) {
 
 void move_stepper() {
   static MillisTimer resetTimer = {resetTimeout};
+  static MillisTimer resetEnableTimer = {resetTimeout + 5000};
+  static bool movingToStart = false;
   if(jogForward) {
     takeStep(FORWARD, stepperDelay);
     currentPosition++;
@@ -173,23 +176,37 @@ void move_stepper() {
       Serial.println(currentPosition);
     }
   } else if (moveToStart) {
-    resetTimer.reset();
-    Serial.print("resetting from position: ");
-    Serial.println(currentPosition);
-    while(!atStart && !resetTimer.timeUp()) {
-      takeStep(REVERSE, stepperDelay);
-      currentPosition++;
+    if(!movingToStart) {
+      movingToStart = true;
+      resetTimer.reset();
+      resetEnableTimer.reset();
+      Serial.print("resetting from position: ");
+      Serial.println(currentPosition);
+    } else {
+      if(atStart || resetTimer.timeUp()) {
+        movingToStart = false;
+        currentPosition = 0;
+        moveToStart = false;
+        newState = NONE;
+        //clear buffer
+        Serial.print("current position: ");
+        Serial.println(currentPosition);
+      } else {
+        takeStep(FORWARD, resetStepperDelay);
+        currentPosition++;
+      }
     }
-    currentPosition = 0;
-    moveToStart = false;
-    newState = NONE;
-    //clear buffer
-    Serial.print("current position: ");
-    Serial.println(currentPosition);
+
+
+
+
     while(Serial1.available()) {
       Serial1.read();
     }
 
+  }
+  if(resetEnableTimer.timeUp() && !resetEnabled) {
+    resetEnabled = true;
   }
 }
 
@@ -208,8 +225,12 @@ uint8_t getRandomDistance() {
 void handle_states() {
   switch(newState) {
     case RESET:
-      moveToStart = true;
-      Serial.println("moving to start");
+      if(resetEnabled){
+        moveToStart = true;
+        Serial.println("moving to start");
+        resetEnabled = false;
+      }
+
       break;
     case RANDOM_MOVE:
       if(moveDistance == false) {
@@ -251,6 +272,7 @@ void handle_states() {
       messageStatus= NACK;
       errorFlag = true;
   }
+  newState = NO_MESSAGE;
 }
 
 void read_inputs() {
@@ -339,7 +361,7 @@ void init_rail_outputs() {
 
 void handle_messages() {
   static message_status_t messageStatus = NACK;
-  master_message_t messageIn = {0, NONE, 0};
+  master_message_t messageIn = {0, NO_MESSAGE, 0};
   response_message_t response = {startByte, warningState, endState, isTravelling, ACK, endByte};
   switch (messageSendState) {
     case RECEIVE:
@@ -367,23 +389,32 @@ void handle_messages() {
             //Serial.print(" ");
             //Serial.println(messageIn.endByte);
             newState = messageIn.currentState;
+            
+            if(newState != NONE) {
+              Serial.print(messageIn.startByte);
+              Serial.print(" ");
+              Serial.print(messageIn.currentState);
+              Serial.print(" ");
+              Serial.println(messageIn.endByte);
+            }
+            
             errorFlag = false;
           } else {
             Serial.print("NACK: ");
-            Serial.print(messageIn.startByte);
+            Serial.print(messageIn.startByte,HEX);
             Serial.print(" ");
-            Serial.print(messageIn.currentState);
+            Serial.print(messageIn.currentState,HEX);
             Serial.print(" ");
-            Serial.print(messageIn.endByte);
+            Serial.print(messageIn.endByte,HEX);
             while(Serial1.available()) {
               Serial.print(" ");
-              Serial.print(Serial1.read(),DEC);
+              Serial.print(Serial1.read(),HEX);
             }
             Serial.println();
             messageStatus= NACK;
           }
           //give time for lectern to switch to receive mode
-          delay(1);
+          delay(3);
         }
       }
 
