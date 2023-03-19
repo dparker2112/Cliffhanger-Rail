@@ -32,7 +32,7 @@ T08.ogg                                 Reset Game Music
 */
 /*Serial1 pins 19(RX), 18(TX)*/
 
-const int stepperDelay = 1000;
+const int stepperDelay = 200;
 const int resetStepperDelay = 400;
 const int resetTimeout = 10000;
 const uint32_t stepsPerInterval = 197;  //7100/36
@@ -352,11 +352,18 @@ void handle_messages() {
           if(messageIn.startByte == startByte && messageIn.endByte == endByte) {
             messageStatus = ACK;
             //Serial.print("ACK ");
+            //Serial.print(messageIn.startByte);
+            //Serial.print(" ");
+            //Serial.print(messageIn.currentState);
+            //Serial.print(" ");
+            //Serial.println(messageIn.endByte);
             newState = messageIn.currentState;
             errorFlag = false;
           } else {
             Serial.print("NACK: ");
             Serial.print(messageIn.startByte);
+            Serial.print(" ");
+            Serial.print(messageIn.currentState);
             Serial.print(" ");
             Serial.print(messageIn.endByte);
             while(Serial1.available()) {
