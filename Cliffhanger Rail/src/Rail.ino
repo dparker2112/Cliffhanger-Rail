@@ -32,7 +32,7 @@ T08.ogg                                 Reset Game Music
 */
 /*Serial1 pins 19(RX), 18(TX)*/
 
-const int stepperDelay = 200;
+const int stepperDelay = 1000;
 const int resetStepperDelay = 400;
 const int resetTimeout = 10000;
 const uint32_t stepsPerInterval = 197;  //7100/36
@@ -43,7 +43,7 @@ const int dangerLocationPin = 25;            //Play Danger Sound
 const int fallPin = 26;                      //Play Lose Sound
 const int stepPin = 22;                      //Stepper Motor Control
 const int dirPin  = 23;
-
+const int stepper_enable_pin = 3;
 const int max845_enable = 2;
 
 typedef enum stepper_direction_t {
@@ -108,6 +108,8 @@ bool moveToStart = false;
 bool moveDistance = false;
 bool jogForward = false;
 bool isTravelling = false;
+
+bool stepperEnabled = false;
 
 int distance = 0;
 uint32_t currentPosition = 0;
@@ -288,6 +290,10 @@ void display_error() {
 
 void takeStep(stepper_direction_t direction, uint16_t stepDelay) {
   isTravelling = true;
+  if(!stepperEnabled) {
+    digitalWrite(stepper_enable_pin, LOW);
+    stepperEnabled = true;
+  }
   switch(direction) {
     case FORWARD:
       digitalWrite(dirPin,HIGH); // Enables the belt to move forward
@@ -324,8 +330,11 @@ void init_rail_inputs() {
 void init_rail_outputs() {
   pinMode(stepPin, OUTPUT);
   pinMode(dirPin, OUTPUT);
+  pinMode(stepper_enable_pin, OUTPUT);
   pinMode(max845_enable, OUTPUT);
   digitalWrite(max845_enable, LOW);
+  //disable stepper
+  digitalWrite(stepper_enable_pin, HIGH);
 }
 
 void handle_messages() {
