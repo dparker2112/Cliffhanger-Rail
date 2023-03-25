@@ -414,7 +414,7 @@ void handle_messages() {
             messageStatus= NACK;
           }
           //give time for lectern to switch to receive mode
-          delay(3);
+          delay(2);
         }
       }
 
@@ -426,6 +426,7 @@ void handle_messages() {
       response.messageStatus = messageStatus;
       
       digitalWrite(max845_enable, HIGH);
+      delayMicroseconds(600);
       Serial1.write((byte *)&response, sizeof(response_message_t));
       delayMicroseconds(600);
       digitalWrite(max845_enable, LOW);
