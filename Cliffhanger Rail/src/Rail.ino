@@ -135,9 +135,44 @@ void setup() {
   */
   //moveDistance = true;
   //distance = random(1,12);
-  //newPosition = getNewPosition(currentPosition, 100);
+  //distance = 12;
+  //newPosition = getNewPosition(currentPosition, 12);
+  timeBetweenGates();
 
 }
+
+
+void timeBetweenGates() {
+  bool travel = true;
+  unsigned long startTime, endTime;
+  while(travel) {
+    takeStep(FORWARD, stepperDelay);
+    if(digitalRead(dangerLocationPin) == LOW) {
+      travel = false;
+      startTime = millis();
+    }
+  }
+  travel = true;
+  int count = 0;
+  while(travel) {
+    takeStep(FORWARD, stepperDelay);
+    count++;
+    if(digitalRead(fallPin) == LOW) {
+      travel = false;
+      endTime = millis();
+    }
+  }
+  Serial.print("Time: ");
+  Serial.print(endTime - startTime);
+  Serial.print(" steps: ");
+  Serial.print(count);
+  Serial.println();
+  delay(6000);
+  for (int i = 0; i < 200; i++) {
+    takeStep(REVERSE, stepperDelay);
+  }
+}
+
 
 void loop() {
   read_inputs();
@@ -281,12 +316,18 @@ void read_inputs() {
     Serial.println("danger location triggered");
   }
   if(digitalRead(fallPin) == LOW) {
+    if(endState == 0) {
+      Serial.println("fall triggered");
+    }
     endState = 1;
-    Serial.println("fall triggered");
+    
   }
   if(digitalRead(resetPin) == LOW) {
+    if(!atStart) {
+      Serial.println("at start");
+    }
     atStart = true;
-    Serial.println("at start");
+    
   } else {
     atStart = false;
   }
