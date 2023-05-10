@@ -26,16 +26,20 @@ T02.ogg                                 Losing (Falling Yodel) Sound
 T03.ogg                                 Winning Sound
 T04.ogg                                 1 Ding
 T05.ogg                                 Danger Sound
-T06LATCH.ogg                            Idle Music
+T06HOLDL.ogg                            Idle Music
 T07.ogg                                 Buzz
 T08.ogg                                 Reset Game Music
 */
 /*Serial1 pins 19(RX), 18(TX)*/
 
-const int stepperDelay = 1000;
+const int stepperDelay = 4000;// 4*1000
 const int resetStepperDelay = 400;
 const int resetTimeout = 10000;
-const uint32_t stepsPerInterval = 197;  //7100/36
+const uint32_t stepsPerInterval = 284;  //7100/25
+//const uint32_t stepsPerInterval = 284;  //7100/25
+//steps to end: 7096
+//steps to danger: 6332
+#define MOVE_24 22
 //const uint32_t stepsPerInterval = 254; //6100/24
 //********************************SENSORS AND MOTOR CONTROL***********************************
 const int resetPin  = 24;                    //Start of game location
@@ -125,18 +129,7 @@ void setup() {
   Serial.begin(115200);
   Serial1.begin(115200);
   randomSeed(analogRead(A0));
-  /*
-  for(int i = 0; i < 100; i++) {
-    Serial.print(random(5,10));
-    Serial.print(" ");
-    delay(1);
-  }
-  delay(2000);
-  */
-  //moveDistance = true;
-  //distance = random(1,12);
-  //distance = 12;
-  //newPosition = getNewPosition(currentPosition, 12);
+ 
   timeBetweenGates();
 
 }
@@ -145,9 +138,10 @@ void setup() {
 void timeBetweenGates() {
   bool travel = true;
   unsigned long startTime, endTime;
+
   while(travel) {
-    takeStep(FORWARD, stepperDelay);
-    if(digitalRead(dangerLocationPin) == LOW) {
+    takeStep(REVERSE, resetStepperDelay);
+    if(digitalRead(resetPin) == LOW) {
       travel = false;
       startTime = millis();
     }
@@ -157,20 +151,52 @@ void timeBetweenGates() {
   while(travel) {
     takeStep(FORWARD, stepperDelay);
     count++;
+    if(digitalRead(dangerLocationPin) == LOW) {
+      travel = false;
+      endTime = millis();
+    }
+  }
+  float interval1 = (endTime - startTime)/1000;
+  int count1 = count;
+
+  travel = true;
+  count = 0;
+  startTime = endTime;
+  while(travel) {
+    takeStep(FORWARD, stepperDelay);
+    count++;
     if(digitalRead(fallPin) == LOW) {
       travel = false;
       endTime = millis();
     }
   }
+  Serial.println();
+  Serial.println("Start to danger:");
   Serial.print("Time: ");
-  Serial.print(endTime - startTime);
-  Serial.print(" steps: ");
-  Serial.print(count);
+  Serial.print(interval1);
+  Serial.print("s steps: ");
+  Serial.println(count1);
+  Serial.print(" spaces between start and danger: ");
+  Serial.print(count1/(float)stepsPerInterval);
+  Serial.println();
+  Serial.println("danger to fall:");
+  Serial.print("Time: ");
+  Serial.print((endTime - startTime)/1000);
+  Serial.print("s steps: ");
+  Serial.println(count);
+  Serial.print("spaces between danger and fall: ");
+  Serial.print(count/(float)stepsPerInterval);
   Serial.println();
   delay(6000);
-  for (int i = 0; i < 200; i++) {
-    takeStep(REVERSE, stepperDelay);
+  travel = true;
+  while(travel) {
+    takeStep(REVERSE, resetStepperDelay);
+    if(digitalRead(resetPin) == LOW) {
+      travel = false;
+      startTime = millis();
+    }
   }
+  
 }
 
 
@@ -227,7 +253,7 @@ void move_stepper() {
         Serial.print("current position: ");
         Serial.println(currentPosition);
       } else {
-        takeStep(FORWARD, resetStepperDelay);
+        takeStep(REVERSE, resetStepperDelay);
         currentPosition++;
       }
     }
@@ -283,7 +309,7 @@ void handle_states() {
     case SPACE24:
       if(moveDistance == false) {
         moveDistance = true;
-        newPosition = getNewPosition(0, 24);
+        newPosition = getNewPosition(0, MOVE_24);
         Serial.print("space 24 - moving 24 blocks, from ");
         Serial.print(currentPosition);
         Serial.print(" to ");
@@ -311,16 +337,19 @@ void handle_states() {
 }
 
 void read_inputs() {
-  if(digitalRead(dangerLocationPin) == LOW) {
-    warningState = 1;
-    Serial.println("danger location triggered");
-  }
-  if(digitalRead(fallPin) == LOW) {
-    if(endState == 0) {
-      Serial.println("fall triggered");
+  if(!moveToStart) {
+    if(digitalRead(dangerLocationPin) == LOW) {
+      warningState = 1;
+      Serial.println("danger location triggered");
     }
-    endState = 1;
-    
+    if(digitalRead(fallPin) == LOW) {
+      if(endState == 0) {
+        moveDistance = false;
+        Serial.println("fall triggered");
+      }
+      endState = 1;
+      
+    }
   }
   if(digitalRead(resetPin) == LOW) {
     if(!atStart) {
@@ -365,7 +394,7 @@ void takeStep(stepper_direction_t direction, uint16_t stepDelay) {
 
       digitalWrite(stepPin,LOW);
       delayMicroseconds(stepDelay);
-      Serial.print(". ");
+      Serial.print(".");
       break;
     case REVERSE:
       digitalWrite(dirPin,LOW); // Enables the belt to move forward
