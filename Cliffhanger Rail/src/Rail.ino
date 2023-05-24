@@ -253,7 +253,7 @@ void move_stepper() {
         Serial.print("current position: ");
         Serial.println(currentPosition);
       } else {
-        takeStep(REVERSE, resetStepperDelay);
+        takeStep(FORWARD, resetStepperDelay);
         currentPosition++;
       }
     }
