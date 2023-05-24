@@ -130,7 +130,7 @@ void setup() {
   Serial1.begin(115200);
   randomSeed(analogRead(A0));
  
-  timeBetweenGates();
+  //timeBetweenGates();
 
 }
 
