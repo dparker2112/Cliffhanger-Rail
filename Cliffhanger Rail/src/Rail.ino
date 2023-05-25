@@ -32,9 +32,9 @@ T08.ogg                                 Reset Game Music
 */
 /*Serial1 pins 19(RX), 18(TX)*/
 
-const int stepperDelay = 4000;// 4*1000
+const int stepperDelay = 2000;// 4*1000 (DEFAULT)
 const int resetStepperDelay = 400;
-const int resetTimeout = 10000;
+const int resetTimeout = 15000;
 const uint32_t stepsPerInterval = 284;  //7100/25
 //const uint32_t stepsPerInterval = 284;  //7100/25
 //steps to end: 7096
