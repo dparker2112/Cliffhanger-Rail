@@ -39,7 +39,7 @@ const uint32_t stepsPerInterval = 284;  //7100/25
 //const uint32_t stepsPerInterval = 284;  //7100/25
 //steps to end: 7096
 //steps to danger: 6332
-#define MOVE_24 22
+#define MOVE_24 21
 //const uint32_t stepsPerInterval = 254; //6100/24
 //********************************SENSORS AND MOTOR CONTROL***********************************
 const int resetPin  = 24;                    //Start of game location
