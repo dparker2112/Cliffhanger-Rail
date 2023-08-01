@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "MillisTimer.h"
+#include "generateMove.h"
 
 // Control for Cliffhanger game.  Made by David Parker nlightn0@gmail.com 04/01/2022
 
@@ -132,6 +133,8 @@ void setup() {
   randomSeed(analogRead(A0));
  
   //timeBetweenGates();
+  //simulateGame();
+  //testOutcomes();
 
 }
 
@@ -292,13 +295,15 @@ void handle_states() {
         moveToStart = true;
         Serial.println("moving to start");
         resetEnabled = false;
+        //reset counter to turn 0
+        resetGame();
       }
 
       break;
     case RANDOM_MOVE:
       if(moveDistance == false) {
         moveDistance = true;
-        distance = getRandomDistance();
+        distance = getNextMove();
         newPosition = getNewPosition(currentPosition, distance);
         Serial.print("random move - moving ");
         Serial.print(distance);
