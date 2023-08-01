@@ -72,7 +72,8 @@ typedef enum lectern_state_t {
   SPACE24 = 2,
   MANUAL = 3,
   NONE = 4,
-  NO_MESSAGE = 5
+  NO_MESSAGE = 5,
+  MOVE_1 = 6
 } lectern_state_t;
 
 typedef struct master_message_t {
@@ -213,7 +214,8 @@ void loop() {
   RANDOM_MOVE,
   SPACE24,
   MANUAL,
-  NONE
+  NONE,
+  MOVE_1
 */
 uint32_t getNewPosition(uint32_t start, uint32_t distance) {
   return start + distance * stepsPerInterval;
@@ -311,6 +313,17 @@ void handle_states() {
         moveDistance = true;
         newPosition = getNewPosition(0, MOVE_24);
         Serial.print("space 24 - moving 24 blocks, from ");
+        Serial.print(currentPosition);
+        Serial.print(" to ");
+        Serial.println(newPosition);
+      }
+
+      break;
+    case MOVE_1:
+      if(moveDistance == false) {
+        moveDistance = true;
+        newPosition = getNewPosition(0, 1);
+        Serial.print("moving 1 space - moving 1 block");
         Serial.print(currentPosition);
         Serial.print(" to ");
         Serial.println(newPosition);
