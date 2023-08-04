@@ -327,7 +327,7 @@ void handle_states() {
     case MOVE_1:
       if(moveDistance == false) {
         moveDistance = true;
-        newPosition = getNewPosition(0, 1);
+        newPosition = getNewPosition(currentPosition, 1);
         Serial.print("moving 1 space - moving 1 block");
         Serial.print(currentPosition);
         Serial.print(" to ");
